@@ -1,5 +1,5 @@
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:26257/bank?ssl=false
+    url: jdbc:postgresql://172.19.19.127:26257/bank?user=root&password=root
     username: maxroach

@@ -14,18 +14,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
 /**
- * This class configures MyBatis and sets up mappers for injection.
+ * MyBatis 配置类：
+ * - 为演示目的在默认 Mapper 中使用普通 SqlSessionTemplate（默认 ExecutorType）
+ * - 为批量插入操作配置了一个使用 BATCH Executor 的 `batchSqlSessionTemplate`
+ * 这允许部分 Mapper（位于 `com.example.cockroachdemo.batchmapper`
+ * 包）使用批处理执行器来更高效地执行大量插入操作。
  * 
- * When using the Spring Boot Starter, using a class like this is completely optional unless you need to
- * have some mappers use the BATCH executor (as we do in this demo). If you don't have that requirement,
- * then you can remove this class. By Default, the MyBatis Spring Boot Starter will find all mappers
- * annotated with @Mapper and will automatically wire your Datasource to the underlying MyBatis
- * infrastructure.
+ * 说明：当使用 MyBatis Spring Boot Starter 时，只有在需要自定义
+ * SqlSessionTemplate（如使用批处理）时才需要此类。
  */
 @Configuration
 @MapperScan(basePackages = "com.example.cockroachdemo.mapper", annotationClass = Mapper.class)
-@MapperScan(basePackages = "com.example.cockroachdemo.batchmapper", annotationClass = Mapper.class,
-            sqlSessionTemplateRef = "batchSqlSessionTemplate")
+@MapperScan(basePackages = "com.example.cockroachdemo.batchmapper", annotationClass = Mapper.class, sqlSessionTemplateRef = "batchSqlSessionTemplate")
 public class MyBatisConfiguration {
 
     @Autowired
@@ -41,11 +41,14 @@ public class MyBatisConfiguration {
     @Bean
     @Primary
     public SqlSessionTemplate sqlSessionTemplate() throws Exception {
+        // 默认的 SqlSessionTemplate，用于大多数 Mapper（普通执行器模式）
         return new SqlSessionTemplate(sqlSessionFactory());
     }
 
     @Bean(name = "batchSqlSessionTemplate")
     public SqlSessionTemplate batchSqlSessionTemplate() throws Exception {
+        // 为需要批量执行的 Mapper 提供一个使用 BATCH 执行器的 SqlSessionTemplate
+        // 使用批处理可以在大量插入/更新场景下显著提升性能，但也需注意事务大小和内存消耗。
         return new SqlSessionTemplate(sqlSessionFactory(), ExecutorType.BATCH);
     }
 }
